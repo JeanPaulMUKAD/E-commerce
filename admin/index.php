@@ -5,7 +5,7 @@
      }
      elseif(isset ($_GET["search"]) and ($_GET["search"] == "connexion/reset.php"))
      {
-        include("Connexion/reset.php");
+        include("connexion/reset.php");
      }
      elseif(isset ($_GET["search"]) and ($_GET["search"] == "connexion/logout.php"))
     {

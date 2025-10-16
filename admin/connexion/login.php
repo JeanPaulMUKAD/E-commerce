@@ -1,6 +1,16 @@
 <?php
 session_start();
-require_once "../config/database.php"; // fichier de connexion MySQL
+
+    $host = "localhost";
+    $user = "root";
+    $pass = "";
+    $dbname = "e_commerce_db";
+
+    $conn = new mysqli($host, $user, $pass, $dbname);
+
+    if ($conn->connect_error) {
+        die("Erreur de connexion : " . $conn->connect_error);
+    }
 
 $message = "";
 
@@ -10,7 +20,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $mot_de_passe = trim($_POST["mot_de_passe"]);
 
     if (!empty($email) && !empty($mot_de_passe)) {
-        // Préparer la requête sécurisée
         $stmt = $conn->prepare("SELECT * FROM utilisateurs WHERE email = ? AND role = 'admin' LIMIT 1");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -19,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($result->num_rows === 1) {
             $admin = $result->fetch_assoc();
 
-            // Vérifier le mot de passe haché
             if (password_verify($mot_de_passe, $admin['mot_de_passe'])) {
                 $_SESSION['admin_id'] = $admin['id'];
                 $_SESSION['admin_nom'] = $admin['nom'];
@@ -45,43 +53,178 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion Administrateur</title>
-    <!-- Lien tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen" style="font-family: verdana, sans-serif;">
+<body class="flex min-h-screen bg-gray-100 font-sans">
 
-    <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md">
-        <div>
-            <img src="https://previews.123rf.com/images/lightstudio/lightstudio1907/lightstudio190700204/126519016-real-estate-construction-logo-design-vector-template-house-and-building-with-blue-grey-color.jpg" alt="Logo" class="mx-auto mb-4 w-28 h-28">
-        </div>
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Connexion <strong class="text-green-700">Administrateur</strong></h2>
-
-        <?php if (!empty($message)): ?>
-            <div class="bg-red-100 text-red-600 p-3 rounded-lg mb-4 text-center">
-                <?= htmlspecialchars($message) ?>
-            </div>
-        <?php endif; ?>
-
-        <form action="" method="POST" class="space-y-4">
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <strong class="text-red-700">*</strong></label>
-                <input type="email" name="email" id="email" required
-                    class="w-full px-4 py-2 border rounded-lg  focus:outline-none" placeholder="Entrez votre E-mail.">
-            </div>
-
-            <div>
-                <label for="mot_de_passe" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe <strong class="text-red-700">*</strong></label>
-                <input type="password" name="mot_de_passe" id="mot_de_passe" required
-                    class="w-full px-4 py-2 border rounded-lg  focus:outline-none" placeholder="Entrez votre mot de passe.">
-            </div>
-
-            <button type="submit"
-                class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition duration-300">
-                Se connecter
-            </button>
-        </form>
+    <!-- Section image -->
+    <div class="hidden lg:flex w-1/2 h-screen">
+        <img src="https://i.pinimg.com/1200x/28/85/bd/2885bdefd80677579a3d51c2d07b86bd.jpg"
+            alt="Illustration Admin"
+            class="object-cover w-full h-full">
     </div>
+
+    <!-- Section formulaire -->
+    <div class="flex w-full lg:w-1/2 items-center justify-center bg-white p-10">
+        <div class="w-full max-w-md">
+            <h2 class="text-center text-xl font-bold" style="color: #673DE6;">JOSHNSON Jr CONSTRUCTION</h2>
+            <div class="text-center mb-6">
+                <img src="https://previews.123rf.com/images/lightstudio/lightstudio1907/lightstudio190700204/126519016-real-estate-construction-logo-design-vector-template-house-and-building-with-blue-grey-color.jpg"
+                    alt="Logo"
+                    class="mx-auto w-24 h-24 mb-3 rounded-full shadow-md">
+                <h2 class="text-3xl font-bold" style="color:#2F1C6A;">Connexion Administrateur</h2>
+                <p class="text-gray-500 text-sm mt-1">Accédez à votre espace sécurisé</p>
+            </div>
+
+            <?php if (!empty($message)): ?>
+                <div class="bg-red-100 text-red-600 p-3 rounded-lg mb-4 text-center">
+                    <?= htmlspecialchars($message) ?>
+                </div>
+            <?php endif; ?>
+
+            <form action="" method="POST" class="space-y-4">
+                <!-- Champ Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        Adresse email <strong class="text-red-700">*</strong>
+                    </label>
+                    <input type="email" name="email" id="email" required
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        placeholder="Entrer votre email.">
+                </div>
+
+                <!-- Champ Mot de passe -->
+                <div>
+                    <label for="mot_de_passe" class="block text-sm font-medium text-gray-700 mb-1">
+                        Mot de passe <strong class="text-red-700">*</strong>
+                    </label>
+                    <div class="relative">
+                        <input type="password" name="mot_de_passe" id="mot_de_passe" required
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none pr-10"
+                            placeholder="Entrer votre mot de passe.">
+                        <button type="button" id="togglePassword"
+                            class="absolute inset-y-0 right-3 flex items-center text-gray-500">
+                            <i data-feather="eye" class="text-indigo-700 hover:text-indigo-500 transition"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bouton Connexion -->
+                <button type="submit"
+                    class="w-full text-white py-2 rounded-lg font-semibold text-lg shadow-md transition duration-300"
+                    style="background-color: #673DE6;">
+                    Connexion
+                </button>
+            </form>
+
+            <p class="text-center text-gray-500 text-sm mt-6">
+                © <?= date('Y') ?> E-commerce Admin | Tous droits réservés.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+
+        const togglePassword = document.querySelector("#togglePassword");
+        const passwordInput = document.querySelector("#mot_de_passe");
+
+        togglePassword.addEventListener("click", function () {
+            const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+            passwordInput.setAttribute("type", type);
+
+            this.innerHTML = type === "password"
+                ? '<i data-feather="eye"></i>'
+                : '<i data-feather="eye-off"></i>';
+            feather.replace();
+        });
+    </script>
+
+
+
+    
+       <!-- SEARCH LOGO -->
+    <script>
+        let a = 0;
+        let masque = document.createElement('div');
+        let logo = document.createElement('img');
+        let cercle = document.createElement('div');
+
+        let angle = 0;
+        let scale = 1;
+        let opacityLogo = 1;
+
+        window.addEventListener('load', () => {
+            a = 1;
+
+            // Le cercle et le logo commencent à bouger immédiatement
+            anime = setInterval(() => {
+                angle += 10; // Vitesse de rotation du cercle
+                cercle.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+
+                // Zoom progressif du logo
+                scale += 0.005;
+                opacityLogo -= 0.005;
+
+                logo.style.transform = `scale(${scale})`;
+                logo.style.opacity = opacityLogo;
+
+            }, 20);
+
+            // Après 1 seconde, on arrête l'animation
+            setTimeout(() => {
+                clearInterval(anime);
+                masque.style.opacity = '0';
+            }, 1000);
+
+            setTimeout(() => {
+                masque.style.visibility = 'hidden';
+            }, 1500);
+        });
+
+        // Création du masque
+        masque.style.width = '100%';
+        masque.style.height = '100vh';
+        masque.style.zIndex = 100000;
+        masque.style.background = '#ffffff';
+        masque.style.position = 'fixed';
+        masque.style.top = '0';
+        masque.style.left = '0';
+        masque.style.opacity = '1';
+        masque.style.transition = '0.5s ease';
+        masque.style.display = 'flex';
+        masque.style.justifyContent = 'center';
+        masque.style.alignItems = 'center';
+        document.body.appendChild(masque);
+
+        // Création du logo
+        logo.setAttribute('src', 'https://previews.123rf.com/images/lightstudio/lightstudio1907/lightstudio190700204/126519016-real-estate-construction-logo-design-vector-template-house-and-building-with-blue-grey-color.jpg');
+        logo.style.width = '10vh';
+        logo.style.height = '10vh';
+        logo.style.position = 'relative';
+        logo.style.zIndex = '2';
+        logo.style.transition = '0.2s'; // Transition pour plus de fluidité
+        masque.appendChild(logo);
+
+        // Création du cercle autour du logo
+        cercle.style.width = '15vh';
+        cercle.style.height = '15vh';
+        cercle.style.border = '3px solid #2F1C6A';
+        cercle.style.borderTop = '3px solid #977aecff;';
+        cercle.style.borderRadius = '50%';
+        cercle.style.position = 'absolute';
+        cercle.style.top = '50%';
+        cercle.style.left = '50%';
+        cercle.style.transform = 'translate(-50%, -50%)';
+        cercle.style.boxSizing = 'border-box';
+        cercle.style.zIndex = '1';
+        masque.appendChild(cercle);
+
+        // Variables de l'animation
+        let anime;
+    </script>
 
 </body>
 
