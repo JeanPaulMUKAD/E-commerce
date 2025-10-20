@@ -1,70 +1,70 @@
 <?php
-session_start();
-require_once "../config/database.php";
+    session_start();
+    require_once "../config/database.php";
 
-// Vérifier si l'admin est connecté
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: index.php");
-    exit();
-}
-
-// Déterminer le mois sélectionné (par défaut : mois actuel)
-$selected_month = isset($_GET['month']) ? (int)$_GET['month'] : date('n');
-
-// Fonction pour obtenir le nom du mois
-function getMonthName($num) {
-    $mois = [
-        1 => "Janvier", 2 => "Février", 3 => "Mars", 4 => "Avril", 5 => "Mai", 6 => "Juin",
-        7 => "Juillet", 8 => "Août", 9 => "Septembre", 10 => "Octobre", 11 => "Novembre", 12 => "Décembre"
-    ];
-    return $mois[$num] ?? "";
-}
-
-// Requêtes filtrées par mois sélectionné
-$stmt = $conn->prepare("SELECT COUNT(*) as total_produits FROM produits WHERE MONTH(date_creation) = ?");
-$stmt->bind_param("i", $selected_month);
-$stmt->execute();
-$produits = $stmt->get_result()->fetch_assoc()['total_produits'];
-
-$stmt = $conn->prepare("SELECT COUNT(*) as total_reservations FROM reservations WHERE MONTH(date_reservation) = ?");
-$stmt->bind_param("i", $selected_month);
-$stmt->execute();
-$reservations = $stmt->get_result()->fetch_assoc()['total_reservations'];
-
-$stmt = $conn->prepare("SELECT COUNT(*) as total_clients FROM utilisateurs WHERE role='client' AND MONTH(date_creation) = ?");
-$stmt->bind_param("i", $selected_month);
-$stmt->execute();
-$clients = $stmt->get_result()->fetch_assoc()['total_clients'];
-
-// Fréquence sur 6 derniers mois
-$produits_freq = $conn->query("SELECT MONTH(date_creation) as mois, COUNT(*) as total 
-                               FROM produits 
-                               WHERE date_creation >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-                               GROUP BY MONTH(date_creation) ORDER BY mois ASC")->fetch_all(MYSQLI_ASSOC);
-
-$reservations_freq = $conn->query("SELECT MONTH(date_reservation) as mois, COUNT(*) as total 
-                                   FROM reservations 
-                                   WHERE date_reservation >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-                                   GROUP BY MONTH(date_reservation) ORDER BY mois ASC")->fetch_all(MYSQLI_ASSOC);
-
-$clients_freq = $conn->query("SELECT MONTH(date_creation) as mois, COUNT(*) as total 
-                              FROM utilisateurs 
-                              WHERE role='client' AND date_creation >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-                              GROUP BY MONTH(date_creation) ORDER BY mois ASC")->fetch_all(MYSQLI_ASSOC);
-
-function formatFrequency($data) {
-    $labels = [];
-    $values = [];
-    foreach ($data as $row) {
-        $labels[] = date("M", mktime(0,0,0,$row['mois'],1));
-        $values[] = $row['total'];
+    // Vérifier si l'admin est connecté
+    if (!isset($_SESSION['admin_id'])) {
+        header("Location: index.php");
+        exit();
     }
-    return ['labels'=>$labels, 'values'=>$values];
-}
 
-$produits_chart = formatFrequency($produits_freq);
-$reservations_chart = formatFrequency($reservations_freq);
-$clients_chart = formatFrequency($clients_freq);
+    // Déterminer le mois sélectionné (par défaut : mois actuel)
+    $selected_month = isset($_GET['month']) ? (int)$_GET['month'] : date('n');
+
+    // Fonction pour obtenir le nom du mois
+    function getMonthName($num) {
+        $mois = [
+            1 => "Janvier", 2 => "Février", 3 => "Mars", 4 => "Avril", 5 => "Mai", 6 => "Juin",
+            7 => "Juillet", 8 => "Août", 9 => "Septembre", 10 => "Octobre", 11 => "Novembre", 12 => "Décembre"
+        ];
+        return $mois[$num] ?? "";
+    }
+
+    // Requêtes filtrées par mois sélectionné
+    $stmt = $conn->prepare("SELECT COUNT(*) as total_produits FROM produits WHERE MONTH(date_creation) = ?");
+    $stmt->bind_param("i", $selected_month);
+    $stmt->execute();
+    $produits = $stmt->get_result()->fetch_assoc()['total_produits'];
+
+    $stmt = $conn->prepare("SELECT COUNT(*) as total_reservations FROM reservations WHERE MONTH(date_reservation) = ?");
+    $stmt->bind_param("i", $selected_month);
+    $stmt->execute();
+    $reservations = $stmt->get_result()->fetch_assoc()['total_reservations'];
+
+    $stmt = $conn->prepare("SELECT COUNT(*) as total_clients FROM utilisateurs WHERE role='client' AND MONTH(date_creation) = ?");
+    $stmt->bind_param("i", $selected_month);
+    $stmt->execute();
+    $clients = $stmt->get_result()->fetch_assoc()['total_clients'];
+
+    // Fréquence sur 6 derniers mois
+    $produits_freq = $conn->query("SELECT MONTH(date_creation) as mois, COUNT(*) as total 
+                                FROM produits 
+                                WHERE date_creation >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+                                GROUP BY MONTH(date_creation) ORDER BY mois ASC")->fetch_all(MYSQLI_ASSOC);
+
+    $reservations_freq = $conn->query("SELECT MONTH(date_reservation) as mois, COUNT(*) as total 
+                                    FROM reservations 
+                                    WHERE date_reservation >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+                                    GROUP BY MONTH(date_reservation) ORDER BY mois ASC")->fetch_all(MYSQLI_ASSOC);
+
+    $clients_freq = $conn->query("SELECT MONTH(date_creation) as mois, COUNT(*) as total 
+                                FROM utilisateurs 
+                                WHERE role='client' AND date_creation >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+                                GROUP BY MONTH(date_creation) ORDER BY mois ASC")->fetch_all(MYSQLI_ASSOC);
+
+    function formatFrequency($data) {
+        $labels = [];
+        $values = [];
+        foreach ($data as $row) {
+            $labels[] = date("M", mktime(0,0,0,$row['mois'],1));
+            $values[] = $row['total'];
+        }
+        return ['labels'=>$labels, 'values'=>$values];
+    }
+
+    $produits_chart = formatFrequency($produits_freq);
+    $reservations_chart = formatFrequency($reservations_freq);
+    $clients_chart = formatFrequency($clients_freq);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -85,14 +85,14 @@ $clients_chart = formatFrequency($clients_freq);
         <!-- Bandeau de filtrage -->
         <div class="bg-white shadow-sm rounded-lg p-5 mb-8 flex flex-wrap items-center justify-between gap-4">
             <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <i class="fa-solid fa-chart-line text-purple-600"></i>
-                Tableau de bord — <span class="text-purple-700"><?= getMonthName($selected_month) ?></span>
+                <i class="fa-solid fa-chart-line text-blue-600"></i>
+                Tableau de bord — <span class="text-blue-700"><?= getMonthName($selected_month) ?></span>
             </h2>
 
             <form method="GET" class="flex items-center gap-3">
                 <label for="month" class="font-medium text-gray-700">Filtrer par mois :</label>
                 <select name="month" id="month" onchange="this.form.submit()" 
-                    class="border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 shadow-sm focus:ring-2 focus:ring-purple-500">
+                    class="border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 shadow-sm focus:ring-2 focus:ring-blue-500">
                     <?php for ($m = 1; $m <= 12; $m++): ?>
                         <option value="<?= $m ?>" <?= $m == $selected_month ? 'selected' : '' ?>>
                             <?= getMonthName($m) ?>

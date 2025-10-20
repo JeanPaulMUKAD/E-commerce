@@ -1,79 +1,79 @@
 <?php
-session_start();
-require_once "../config/database.php";
+    session_start();
+    require_once "../config/database.php";
 
-// Vérifie si l'admin est connecté
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: index.php");
-    exit();
-}
-
-// Vérifie si le dossier uploads existe
-if (!is_dir('uploads')) {
-    mkdir('uploads', 0777, true);
-}
-
-$message = "";
-
-// === AJOUT D’UN PRODUIT ===
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['ajouter'])) {
-    $nom = trim($_POST["nom"]);
-    $description = trim($_POST["description"]);
-    $prix = floatval($_POST["prix"]);
-    $quantite = intval($_POST["quantite"]);
-    $categorie = trim($_POST["categorie"]);
-
-    $image = null;
-    if (!empty($_FILES["image"]["name"])) {
-        $image = "uploads/" . basename($_FILES["image"]["name"]);
-        move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+    // Vérifie si l'admin est connecté
+    if (!isset($_SESSION['admin_id'])) {
+        header("Location: index.php");
+        exit();
     }
 
-    $stmt = $conn->prepare("INSERT INTO produits (nom, description, prix, quantite, categorie, image, date_creation) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-    $stmt->bind_param("sssdss", $nom, $description, $prix, $quantite, $categorie, $image);
-
-    if ($stmt->execute()) {
-        $message = "✅ Produit ajouté avec succès.";
-    } else {
-        $message = "❌ Erreur lors de l’ajout du produit.";
-    }
-}
-
-// === MODIFICATION D’UN PRODUIT ===
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['modifier'])) {
-    $id = intval($_POST["id"]);
-    $nom = trim($_POST["nom"]);
-    $description = trim($_POST["description"]);
-    $prix = floatval($_POST["prix"]);
-    $quantite = intval($_POST["quantite"]);
-    $categorie = trim($_POST["categorie"]);
-
-    $image = $_POST["image_actuelle"];
-    if (!empty($_FILES["image"]["name"])) {
-        $image = "uploads/" . basename($_FILES["image"]["name"]);
-        move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+    // Vérifie si le dossier uploads existe
+    if (!is_dir('uploads')) {
+        mkdir('uploads', 0777, true);
     }
 
-    // ✅ Bonne syntaxe
-    $stmt = $conn->prepare("UPDATE produits SET nom=?, description=?, prix=?, quantite=?, categorie=?, image=?, date_modification=NOW() WHERE id=?");
-    $stmt->bind_param("sssdssi", $nom, $description, $prix, $quantite, $categorie, $image, $id);
+    $message = "";
 
-    if ($stmt->execute()) {
-        $message = "✅ Produit modifié avec succès.";
-    } else {
-        $message = "❌ Erreur lors de la modification du produit.";
+    // === AJOUT D’UN PRODUIT ===
+    if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['ajouter'])) {
+        $nom = trim($_POST["nom"]);
+        $description = trim($_POST["description"]);
+        $prix = floatval($_POST["prix"]);
+        $quantite = intval($_POST["quantite"]);
+        $categorie = trim($_POST["categorie"]);
+
+        $image = null;
+        if (!empty($_FILES["image"]["name"])) {
+            $image = "uploads/" . basename($_FILES["image"]["name"]);
+            move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+        }
+
+        $stmt = $conn->prepare("INSERT INTO produits (nom, description, prix, quantite, categorie, image, date_creation) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+        $stmt->bind_param("sssdss", $nom, $description, $prix, $quantite, $categorie, $image);
+
+        if ($stmt->execute()) {
+            $message = "✅ Produit ajouté avec succès.";
+        } else {
+            $message = "❌ Erreur lors de l’ajout du produit.";
+        }
     }
-}
 
-// === SUPPRESSION D’UN PRODUIT ===
-if (isset($_GET['supprimer'])) {
-    $id = intval($_GET['supprimer']);
-    $conn->query("DELETE FROM produits WHERE id=$id");
-    $message = "🗑️ Produit supprimé avec succès.";
-}
+    // === MODIFICATION D’UN PRODUIT ===
+    if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['modifier'])) {
+        $id = intval($_POST["id"]);
+        $nom = trim($_POST["nom"]);
+        $description = trim($_POST["description"]);
+        $prix = floatval($_POST["prix"]);
+        $quantite = intval($_POST["quantite"]);
+        $categorie = trim($_POST["categorie"]);
 
-// === LISTE DES PRODUITS ===
-$result = $conn->query("SELECT * FROM produits ORDER BY id ASC");
+        $image = $_POST["image_actuelle"];
+        if (!empty($_FILES["image"]["name"])) {
+            $image = "uploads/" . basename($_FILES["image"]["name"]);
+            move_uploaded_file($_FILES["image"]["tmp_name"], $image);
+        }
+
+        // ✅ Bonne syntaxe
+        $stmt = $conn->prepare("UPDATE produits SET nom=?, description=?, prix=?, quantite=?, categorie=?, image=?, date_modification=NOW() WHERE id=?");
+        $stmt->bind_param("sssdssi", $nom, $description, $prix, $quantite, $categorie, $image, $id);
+
+        if ($stmt->execute()) {
+            $message = "✅ Produit modifié avec succès.";
+        } else {
+            $message = "❌ Erreur lors de la modification du produit.";
+        }
+    }
+
+    // === SUPPRESSION D’UN PRODUIT ===
+    if (isset($_GET['supprimer'])) {
+        $id = intval($_GET['supprimer']);
+        $conn->query("DELETE FROM produits WHERE id=$id");
+        $message = "🗑️ Produit supprimé avec succès.";
+    }
+
+    // === LISTE DES PRODUITS ===
+    $result = $conn->query("SELECT * FROM produits ORDER BY id ASC");
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -90,7 +90,7 @@ $result = $conn->query("SELECT * FROM produits ORDER BY id ASC");
     <?php include "includes/sidebar.php"; ?>
 
     <div class="flex-1 p-6">
-        <h1 class="text-2xl font-bold mb-4 text-purple-700">Gestion des produits</h1>
+        <h1 class="text-2xl font-bold mb-4 text-blue-700">Gestion des produits</h1>
 
         <?php if ($message): ?>
             <div class="bg-green-100 text-green-700 p-3 rounded mb-4"><?= $message ?></div>
@@ -98,32 +98,32 @@ $result = $conn->query("SELECT * FROM produits ORDER BY id ASC");
 
         <!-- Formulaire d’ajout -->
         <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow mb-6">
-            <h2 class="text-lg font-semibold mb-3 text-purple-700">➕ Ajouter un produit</h2>
+            <h2 class="text-lg font-semibold mb-3 text-blue-700">➕ Ajouter un produit</h2>
             <div class="grid md:grid-cols-2 gap-4">
                 <input type="text" name="nom" placeholder="Nom du produit"
-                    class="border p-2 rounded w-full focus:ring-2 focus:ring-purple-500" required>
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-500" required>
                 <input type="text" name="categorie" placeholder="Catégorie"
-                    class="border p-2 rounded w-full focus:ring-2 focus:ring-purple-500">
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-500">
                 <textarea name="description" placeholder="Description"
-                    class="border p-2 rounded w-full md:col-span-2 focus:ring-2 focus:ring-purple-500"></textarea>
+                    class="border p-2 rounded w-full md:col-span-2 focus:ring-2 focus:ring-blue-500"></textarea>
                 <input type="number" min="1" step="0.01" name="prix" placeholder="Prix ($)"
-                    class="border p-2 rounded w-full focus:ring-2 focus:ring-purple-500" required>
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-500" required>
                 <input type="number" min="1" name="quantite" placeholder="Quantité"
-                    class="border p-2 rounded w-full focus:ring-2 focus:ring-purple-500" required>
+                    class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-500" required>
                 <input type="file" name="image"
-                    class="border p-2 rounded w-full md:col-span-2 focus:ring-2 focus:ring-purple-500">
+                    class="border p-2 rounded w-full md:col-span-2 focus:ring-2 focus:ring-blue-500">
             </div>
             <button type="submit" name="ajouter"
-                class="mt-4 bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 transition">
+                class="mt-4 bg-bue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
                 Publier le produit
             </button>
         </form>
 
         <!-- Liste des produits -->
         <div class="bg-white p-6 rounded shadow">
-            <h2 class="text-lg font-semibold mb-3 text-purple-700">📦 Liste des produits</h2>
+            <h2 class="text-lg font-semibold mb-3 text-blue-700">📦 Liste des produits</h2>
             <table class="w-full border-collapse text-sm">
-                <thead class="bg-purple-100 text-purple-800">
+                <thead class="bg-blue-100 text-blue-800">
                     <tr>
                         <th class="p-2 border">ID</th>
                         <th class="p-2 border">Nom</th>
