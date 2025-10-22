@@ -8,6 +8,23 @@
         exit();
     }
 
+    // Fonction de conversion USD vers FC (Francs Congolais)
+    // Taux de change approximatif : 1 USD = 2,750 FC (à ajuster selon le taux actuel)
+    function convertirUsdVersFc($prixUsd) {
+        $tauxChange = 2750; // 1 USD = 2,750 FC
+        return $prixUsd * $tauxChange;
+    }
+
+    // Fonction de conversion FC vers USD
+    function convertirFcVersUsd($prixFc) {
+        $tauxChange = 2750; // 1 USD = 2,750 FC
+        return $prixFc / $tauxChange;
+    }
+
+    function formaterPrix($prix) {
+        return number_format($prix, 0, ',', ' ');
+    }
+
     // Vérifie si le dossier uploads existe
     if (!is_dir('uploads')) {
         mkdir('uploads', 0777, true);
@@ -15,11 +32,18 @@
 
     $message = "";
 
-    // === AJOUT D’UN PRODUIT ===
+    // === AJOUT D'UN PRODUIT ===
     if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['ajouter'])) {
         $nom = trim($_POST["nom"]);
         $description = trim($_POST["description"]);
         $prix = floatval($_POST["prix"]);
+        $devise = $_POST["devise"] ?? 'USD';
+        
+        // Convertir le prix en USD si nécessaire
+        if ($devise === 'FC') {
+            $prix = convertirFcVersUsd($prix);
+        }
+        
         $quantite = intval($_POST["quantite"]);
         $categorie = trim($_POST["categorie"]);
 
@@ -39,12 +63,19 @@
         }
     }
 
-    // === MODIFICATION D’UN PRODUIT ===
+    // === MODIFICATION D'UN PRODUIT ===
     if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['modifier'])) {
         $id = intval($_POST["id"]);
         $nom = trim($_POST["nom"]);
         $description = trim($_POST["description"]);
         $prix = floatval($_POST["prix"]);
+        $devise = $_POST["devise"] ?? 'USD';
+        
+        // Convertir le prix en USD si nécessaire
+        if ($devise === 'FC') {
+            $prix = convertirFcVersUsd($prix);
+        }
+        
         $quantite = intval($_POST["quantite"]);
         $categorie = trim($_POST["categorie"]);
 
@@ -106,8 +137,22 @@
                     class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-500">
                 <textarea name="description" placeholder="Description"
                     class="border p-2 rounded w-full md:col-span-2 focus:ring-2 focus:ring-blue-500"></textarea>
-                <input type="number" min="1" step="0.01" name="prix" placeholder="Prix ($)"
-                    class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-500" required>
+                <div class="md:col-span-2">
+                    <div class="flex gap-2">
+                        <select name="devise" id="devise" class="border p-2 rounded focus:ring-2 focus:ring-blue-500" onchange="updatePricePlaceholder()">
+                            <option value="USD">USD ($)</option>
+                            <option value="FC">FC</option>
+                        </select>
+                        <input type="number" min="1" step="0.01" name="prix" id="prix" placeholder="Prix en USD ($)"
+                            class="border p-2 rounded flex-1 focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="mt-1 text-sm text-gray-500">
+                        <span id="conversion-info">💡 Le prix sera automatiquement converti en Francs Congolais (FC)</span>
+                    </div>
+                    <div id="conversion-display" class="mt-1 text-sm text-blue-600 hidden">
+                        <span id="conversion-text"></span>
+                    </div>
+                </div>
                 <input type="number" min="1" name="quantite" placeholder="Quantité"
                     class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-500" required>
                 <input type="file" name="image"
@@ -141,7 +186,12 @@
                         <tr class="border hover:bg-gray-50">
                             <td class="p-2 border text-center"><?= $p['id'] ?></td>
                             <td class="p-2 border"><?= htmlspecialchars($p['nom']) ?></td>
-                            <td class="p-2 border"><?= $p['prix'] ?> $</td>
+                            <td class="p-2 border">
+                                <div class="text-sm">
+                                    <div class="font-semibold text-green-600"><?= formaterPrix($p['prix']) ?> $</div>
+                                    <div class="text-gray-600"><?= formaterPrix(convertirUsdVersFc($p['prix'])) ?> FC</div>
+                                </div>
+                            </td>
                             <td class="p-2 border"><?= $p['quantite'] ?></td>
                             <td class="p-2 border"><?= htmlspecialchars($p['categorie']) ?></td>
                             <td class="p-2 border text-center">
@@ -182,8 +232,24 @@
                             class="border p-2 rounded w-full focus:ring-2 focus:ring-yellow-400">
                         <textarea name="description"
                             class="border p-2 rounded w-full md:col-span-2 focus:ring-2 focus:ring-yellow-400"><?= htmlspecialchars($prod['description']) ?></textarea>
-                        <input type="number" min="1" step="0.01" name="prix" value="<?= $prod['prix'] ?>"
-                            class="border p-2 rounded w-full focus:ring-2 focus:ring-yellow-400" required>
+                        <div class="md:col-span-2">
+                            <div class="flex gap-2">
+                                <select name="devise" id="devise-edit" class="border p-2 rounded focus:ring-2 focus:ring-yellow-400" onchange="updatePricePlaceholderEdit()">
+                                    <option value="USD">USD ($)</option>
+                                    <option value="FC">FC</option>
+                                </select>
+                                <input type="number" min="1" step="0.01" name="prix" id="prix-edit" value="<?= $prod['prix'] ?>"
+                                    class="border p-2 rounded flex-1 focus:ring-2 focus:ring-yellow-400" required>
+                            </div>
+                            <div class="mt-1 text-sm text-gray-600">
+                                <span class="font-semibold text-green-600"><?= formaterPrix($prod['prix']) ?> $</span>
+                                <span class="mx-2">|</span>
+                                <span class="text-gray-600"><?= formaterPrix(convertirUsdVersFc($prod['prix'])) ?> FC</span>
+                            </div>
+                            <div id="conversion-display-edit" class="mt-1 text-sm text-blue-600 hidden">
+                                <span id="conversion-text-edit"></span>
+                            </div>
+                        </div>
                         <input type="number" min="1" name="quantite" value="<?= $prod['quantite'] ?>"
                             class="border p-2 rounded w-full focus:ring-2 focus:ring-yellow-400" required>
                         <input type="file" name="image"
@@ -319,6 +385,81 @@
 
         // Variables de l'animation
         let anime;
+    </script>
+
+    <!-- Script pour la conversion de devises -->
+    <script>
+        const TAUX_CHANGE = 2750; // 1 USD = 2,750 FC
+
+        function updatePricePlaceholder() {
+            const devise = document.getElementById('devise').value;
+            const prixInput = document.getElementById('prix');
+            const conversionInfo = document.getElementById('conversion-info');
+            const conversionDisplay = document.getElementById('conversion-display');
+            
+            if (devise === 'USD') {
+                prixInput.placeholder = 'Prix en USD ($)';
+                conversionInfo.textContent = '💡 Le prix sera automatiquement converti en Francs Congolais (FC)';
+            } else {
+                prixInput.placeholder = 'Prix en FC';
+                conversionInfo.textContent = '💡 Le prix sera automatiquement converti en Dollars (USD)';
+            }
+            
+            // Ajouter l'événement de conversion en temps réel
+            prixInput.oninput = function() {
+                convertPrice('prix', 'conversion-text', 'conversion-display');
+            };
+        }
+
+        function updatePricePlaceholderEdit() {
+            const devise = document.getElementById('devise-edit').value;
+            const prixInput = document.getElementById('prix-edit');
+            const conversionDisplay = document.getElementById('conversion-display-edit');
+            
+            // Ajouter l'événement de conversion en temps réel
+            prixInput.oninput = function() {
+                convertPrice('prix-edit', 'conversion-text-edit', 'conversion-display-edit');
+            };
+        }
+
+        function convertPrice(inputId, textId, displayId) {
+            const prixInput = document.getElementById(inputId);
+            const devise = document.getElementById(inputId === 'prix' ? 'devise' : 'devise-edit').value;
+            const prix = parseFloat(prixInput.value);
+            const conversionText = document.getElementById(textId);
+            const conversionDisplay = document.getElementById(displayId);
+            
+            if (isNaN(prix) || prix <= 0) {
+                conversionDisplay.classList.add('hidden');
+                return;
+            }
+            
+            let convertedPrice;
+            let convertedCurrency;
+            
+            if (devise === 'USD') {
+                convertedPrice = prix * TAUX_CHANGE;
+                convertedCurrency = 'FC';
+            } else {
+                convertedPrice = prix / TAUX_CHANGE;
+                convertedCurrency = 'USD';
+            }
+            
+            conversionText.textContent = `≈ ${formatNumber(convertedPrice)} ${convertedCurrency}`;
+            conversionDisplay.classList.remove('hidden');
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('fr-FR').format(Math.round(num));
+        }
+
+        // Initialiser les événements au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePricePlaceholder();
+            if (document.getElementById('devise-edit')) {
+                updatePricePlaceholderEdit();
+            }
+        });
     </script>
 </body>
 

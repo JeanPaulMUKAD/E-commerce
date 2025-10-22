@@ -183,7 +183,7 @@
                 <h3 class="text-xl font-bold text-gray-700"><?= htmlspecialchars($_SESSION['admin_nom']) ?></h3>
                 <p class="text-gray-500 mb-2"><?= htmlspecialchars($_SESSION['user_role']) ?></p>
                 <p class="text-gray-400 text-sm mb-4">Connecté depuis <?= date("d/m/Y") ?></p>
-                <a href="connexion/logout.php" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition">
+                <a href="deconnexion.php" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition">
                     <i class="fa-solid fa-right-from-bracket mr-2"></i> Déconnexion
                 </a>
             </div>
