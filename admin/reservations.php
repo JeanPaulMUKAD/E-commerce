@@ -25,12 +25,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
-<body class="flex bg-gray-100" style="font-family: 'DM Sans', sans-serif;">
+<body class="flex bg-gray-100" style="font-family: 'Arial', sans-serif;">
     <?php include "includes/sidebar.php"; ?>
 
     <div class="flex-1 p-8">
-        <h1 class="text-3xl font-bold mb-6 text-gray-800 flex items-center gap-3">
-            <i class="fa-solid fa-calendar-check text-blue-600"></i>
+        <h1 class="text-3xl font-bold mb-6 text-blue-800 flex items-center gap-3">
             Liste des Réservations Clients
         </h1>
 
@@ -109,84 +108,66 @@
     </div>
 
         <!-- SEARCH LOGO -->
-    <script>
-        let a = 0;
-        let masque = document.createElement('div');
-        let logo = document.createElement('img');
-        let cercle = document.createElement('div');
+   <script>
+    
+    let a = 0;
+    let masque = document.createElement('div');
+    let cercle = document.createElement('div');
 
-        let angle = 0;
-        let scale = 1;
-        let opacityLogo = 1;
+    let angle = 0;
 
-        window.addEventListener('load', () => {
-            a = 1;
+    window.addEventListener('load', () => {
+        a = 1;
 
-            // Le cercle et le logo commencent à bouger immédiatement
-            anime = setInterval(() => {
-                angle += 10; // Vitesse de rotation du cercle
-                cercle.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+        // Le cercle commence à tourner immédiatement
+        anime = setInterval(() => {
+            angle += 10; // Vitesse de rotation du cercle
+            cercle.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+        }, 20);
 
-                // Zoom progressif du logo
-                scale += 0.005;
-                opacityLogo -= 0.005;
+        // Après 1 seconde, on arrête l'animation et on fait disparaître le masque
+        setTimeout(() => {
+            clearInterval(anime);
+            masque.style.opacity = '0';
+        }, 1000);
 
-                logo.style.transform = `scale(${scale})`;
-                logo.style.opacity = opacityLogo;
+        setTimeout(() => {
+            masque.style.visibility = 'hidden';
+        }, 1500);
+    });
 
-            }, 20);
+    // Création du masque
+    masque.style.width = '100%';
+    masque.style.height = '100vh';
+    masque.style.zIndex = 100000;
+    masque.style.background = '#ffffff';
+    masque.style.position = 'fixed';
+    masque.style.top = '0';
+    masque.style.left = '0';
+    masque.style.opacity = '1';
+    masque.style.transition = '0.5s ease';
+    masque.style.display = 'flex';
+    masque.style.justifyContent = 'center';
+    masque.style.alignItems = 'center';
+    document.body.appendChild(masque);
 
-            // Après 1 seconde, on arrête l'animation
-            setTimeout(() => {
-                clearInterval(anime);
-                masque.style.opacity = '0';
-            }, 1000);
+    // Création du cercle (réduit)
+    cercle.style.width = '40px';  // Au lieu de 15vh
+    cercle.style.height = '40px'; // Au lieu de 15vh
+    cercle.style.border = '2px solid #f3f3f3'; // Bordure plus fine
+    cercle.style.borderTop = '2px solid #2F1C6A';
+    cercle.style.borderRadius = '50%';
+    cercle.style.position = 'absolute';
+    cercle.style.top = '50%';
+    cercle.style.left = '50%';
+    cercle.style.transform = 'translate(-50%, -50%)';
+    cercle.style.boxSizing = 'border-box';
+    cercle.style.zIndex = '1';
+    masque.appendChild(cercle);
 
-            setTimeout(() => {
-                masque.style.visibility = 'hidden';
-            }, 1500);
-        });
+    // Variable de l'animation
+    let anime;
 
-        // Création du masque
-        masque.style.width = '100%';
-        masque.style.height = '100vh';
-        masque.style.zIndex = 100000;
-        masque.style.background = '#ffffff';
-        masque.style.position = 'fixed';
-        masque.style.top = '0';
-        masque.style.left = '0';
-        masque.style.opacity = '1';
-        masque.style.transition = '0.5s ease';
-        masque.style.display = 'flex';
-        masque.style.justifyContent = 'center';
-        masque.style.alignItems = 'center';
-        document.body.appendChild(masque);
-
-        // Création du logo
-        logo.setAttribute('src', 'https://previews.123rf.com/images/lightstudio/lightstudio1907/lightstudio190700204/126519016-real-estate-construction-logo-design-vector-template-house-and-building-with-blue-grey-color.jpg');
-        logo.style.width = '10vh';
-        logo.style.height = '10vh';
-        logo.style.position = 'relative';
-        logo.style.zIndex = '2';
-        logo.style.transition = '0.2s'; // Transition pour plus de fluidité
-        masque.appendChild(logo);
-
-        // Création du cercle autour du logo
-        cercle.style.width = '15vh';
-        cercle.style.height = '15vh';
-        cercle.style.border = '3px solid #2F1C6A';
-        cercle.style.borderTop = '3px solid #977aecff;';
-        cercle.style.borderRadius = '50%';
-        cercle.style.position = 'absolute';
-        cercle.style.top = '50%';
-        cercle.style.left = '50%';
-        cercle.style.transform = 'translate(-50%, -50%)';
-        cercle.style.boxSizing = 'border-box';
-        cercle.style.zIndex = '1';
-        masque.appendChild(cercle);
-
-        // Variables de l'animation
-        let anime;
-    </script>
+   </script>
 </body>
 </html>
