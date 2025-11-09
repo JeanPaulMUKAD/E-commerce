@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1); 
     session_start();
     require_once "../config/database.php";
 
@@ -7,12 +7,21 @@
         exit();
     }
 
+    // Gestion de la suppression
+    if (isset($_GET['supprimer'])) {
+        $id = intval($_GET['supprimer']);
+        $conn->query("DELETE FROM reservations WHERE id=$id");
+        header("Location: reservations.php?deleted=1");
+        exit();
+    }
+
+    // REQUÊTE CORRIGÉE : Ajout de p.devise
     $result = $conn->query("
-        SELECT r.*, u.nom AS client_nom, p.nom AS produit_nom
+        SELECT r.*, u.nom AS client_nom, p.nom AS produit_nom, p.devise AS devise
         FROM reservations r
         JOIN utilisateurs u ON r.utilisateur_id = u.id
         JOIN produits p ON r.produit_id = p.id
-        ORDER BY r.id DESC
+        ORDER BY r.id ASC
     ");
 ?>
 <!DOCTYPE html>
@@ -41,6 +50,7 @@
                         <th class="p-2 border">Client</th>
                         <th class="p-2 border">Produit</th>
                         <th class="p-2 border">Quantité</th>
+                        <th class="p-2 border">Montant Total</th>
                         <th class="p-2 border">Date</th>
                         <th class="p-2 border">Statut</th>
                         <th class="p-2 border">Actions</th>
@@ -53,6 +63,14 @@
                             <td class="p-4 text-gray-800"><?= htmlspecialchars($r['client_nom']) ?></td>
                             <td class="p-4 text-gray-800"><?= htmlspecialchars($r['produit_nom']) ?></td>
                             <td class="p-4 text-gray-600"><?= $r['quantite'] ?></td>
+                            <td class="p-4 text-green-600 font-semibold">
+                                <?php 
+                                $montant = floatval($r['montant_total']);
+                                echo number_format($montant, 2, ',', ' ');
+                                ?> 
+                                <!-- AFFICHAGE DE LA DEVISE RÉELLE -->
+                                <?= $r['devise'] ?>
+                            </td>
                             <td class="p-4 text-gray-500"><?= date('d/m/Y', strtotime($r['date_reservation'])) ?></td>
 
                             <!-- Statut coloré -->
@@ -71,7 +89,7 @@
                                 </span>
                             </td>
 
-                            <!-- Boutons d’action -->
+                            <!-- Boutons d'action -->
                             <td class="p-4 text-center">
                                 <a href="?edit=<?= $r['id'] ?>" 
                                    class="text-blue-600 hover:text-blue-800 mx-2" 
@@ -107,8 +125,8 @@
         <?php endif; ?>
     </div>
 
-        <!-- SEARCH LOGO -->
-   <script>
+    <!-- SEARCH LOGO -->
+    <script>
     
     let a = 0;
     let masque = document.createElement('div');
@@ -168,6 +186,6 @@
     // Variable de l'animation
     let anime;
 
-   </script>
+    </script>
 </body>
 </html>

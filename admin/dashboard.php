@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1); 
 session_start();
 require_once "../config/database.php";
 
@@ -68,7 +68,9 @@ function formatFrequency($data)
     $labels = [];
     $values = [];
     foreach ($data as $row) {
-        $labels[] = date("M", mktime(0, 0, 0, $row['mois'], 1));
+        // CORRECTION : Conversion en entier pour mktime()
+        $month_num = (int)$row['mois'];
+        $labels[] = date("M", mktime(0, 0, 0, $month_num, 1));
         $values[] = $row['total'];
     }
     return ['labels' => $labels, 'values' => $values];
@@ -443,7 +445,7 @@ $activite_recente = $conn->query("SELECT 'Nouveau produit' as type, p.nom as des
 
             // Exemple : récupérer les 5 produits les plus vendus
 // (On suppose que tu as un champ `ventes` dans la table `produits` ou que tu veux compter via une autre table comme `commandes`)
-            $query = "SELECT nom, quantite, prix FROM produits ORDER BY quantite DESC LIMIT 5";
+            $query = "SELECT nom, quantite, prix, devise FROM produits ORDER BY quantite DESC LIMIT 5";
             $result = $conn->query($query);
 
             $topProduits = [];
@@ -469,7 +471,8 @@ $activite_recente = $conn->query("SELECT 'Nouveau produit' as type, p.nom as des
                                 <th class="py-2 px-3 font-medium">Produit</th>
                                 <th class="py-2 px-3 font-medium">Quantité vendue</th>
                                 <th class="py-2 px-3 font-medium">Prix</th>
-                                <th class="py-2 px-3 font-medium text-right">Montant total ($)</th>
+                                <th class="py-2 px-3 font-medium">Devise</th>
+                                <th class="py-2 px-3 font-medium text-right">Montant total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -477,7 +480,8 @@ $activite_recente = $conn->query("SELECT 'Nouveau produit' as type, p.nom as des
                                 <tr class="border-b hover:bg-gray-50 transition">
                                     <td class="py-2 px-3 font-medium text-gray-800"><?= htmlspecialchars($p['nom']) ?></td>
                                     <td class="py-2 px-3"><?= $p['quantite'] ?></td>
-                                    <td class="py-2 px-3"><?= $p['prix'] . ' $' ?></td>
+                                    <td class="py-2 px-3"><?= $p['prix'] ?></td>
+                                    <td class="py-2 px-3"><?= $p['devise']?></td>
                                     <td class="py-2 px-3 text-right font-semibold text-gray-700">
                                         <?= number_format($p['prix'] * $p['quantite'], 2, ',', ' ') ?>
                                     </td>
@@ -496,7 +500,7 @@ $activite_recente = $conn->query("SELECT 'Nouveau produit' as type, p.nom as des
                     Rapport mensuel
                 </h3>
                 <p class="text-gray-600 text-sm leading-relaxed mb-4">
-                    Ce mois-ci, l’entreprise a enregistré une progression de <span
+                    Ce mois-ci, l'entreprise a enregistré une progression de <span
                         class="text-green-600 font-semibold">+18%</span> par rapport au mois précédent.
                     Le taux de fidélisation client reste stable, tandis que les ventes en ligne connaissent une hausse
                     continue.

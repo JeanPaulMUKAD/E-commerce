@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1); 
     session_start();
     require_once "../config/database.php";
 
@@ -9,19 +9,20 @@
     }
 
     // Fonction de conversion USD vers FC (Francs Congolais)
-    // Taux de change approximatif : 1 USD = 2,750 FC (à ajuster selon le taux actuel)
     function convertirUsdVersFc($prixUsd) {
-        $tauxChange = 2750; // 1 USD = 2,750 FC
+        $tauxChange = 2500; // 1 USD = 2,500 FC
         return $prixUsd * $tauxChange;
     }
 
     // Fonction de conversion FC vers USD
     function convertirFcVersUsd($prixFc) {
-        $tauxChange = 2750; // 1 USD = 2,750 FC
+        $tauxChange = 2500; // 1 USD = 2,500 FC
         return $prixFc / $tauxChange;
     }
 
     function formaterPrix($prix) {
+        // Conversion en float pour s'assurer que c'est un nombre
+        $prix = floatval($prix);
         return number_format($prix, 0, ',', ' ');
     }
 
@@ -39,11 +40,7 @@
         $prix = floatval($_POST["prix"]);
         $devise = $_POST["devise"] ?? 'USD';
         
-        // Convertir le prix en USD si nécessaire
-        if ($devise === 'FC') {
-            $prix = convertirFcVersUsd($prix);
-        }
-        
+        // Stocker le prix TEL QUEL avec sa devise
         $quantite = intval($_POST["quantite"]);
         $categorie = trim($_POST["categorie"]);
 
@@ -53,13 +50,13 @@
             move_uploaded_file($_FILES["image"]["tmp_name"], $image);
         }
 
-        $stmt = $conn->prepare("INSERT INTO produits (nom, description, prix, quantite, categorie, image, date_creation) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-        $stmt->bind_param("sssdss", $nom, $description, $prix, $quantite, $categorie, $image);
+        $stmt = $conn->prepare("INSERT INTO produits (nom, description, prix, devise, quantite, categorie, image, date_creation) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+        $stmt->bind_param("ssdsdss", $nom, $description, $prix, $devise, $quantite, $categorie, $image);
 
         if ($stmt->execute()) {
             $message = "✅ Produit ajouté avec succès.";
         } else {
-            $message = "❌ Erreur lors de l’ajout du produit.";
+            $message = "❌ Erreur lors de l'ajout du produit.";
         }
     }
 
@@ -71,11 +68,7 @@
         $prix = floatval($_POST["prix"]);
         $devise = $_POST["devise"] ?? 'USD';
         
-        // Convertir le prix en USD si nécessaire
-        if ($devise === 'FC') {
-            $prix = convertirFcVersUsd($prix);
-        }
-        
+        // Stocker le prix TEL QUEL avec sa devise
         $quantite = intval($_POST["quantite"]);
         $categorie = trim($_POST["categorie"]);
 
@@ -85,9 +78,8 @@
             move_uploaded_file($_FILES["image"]["tmp_name"], $image);
         }
 
-        // ✅ Bonne syntaxe
-        $stmt = $conn->prepare("UPDATE produits SET nom=?, description=?, prix=?, quantite=?, categorie=?, image=?, date_modification=NOW() WHERE id=?");
-        $stmt->bind_param("sssdssi", $nom, $description, $prix, $quantite, $categorie, $image, $id);
+        $stmt = $conn->prepare("UPDATE produits SET nom=?, description=?, prix=?, devise=?, quantite=?, categorie=?, image=?, date_modification=NOW() WHERE id=?");
+        $stmt->bind_param("ssdsdssi", $nom, $description, $prix, $devise, $quantite, $categorie, $image, $id);
 
         if ($stmt->execute()) {
             $message = "✅ Produit modifié avec succès.";
@@ -96,7 +88,7 @@
         }
     }
 
-    // === SUPPRESSION D’UN PRODUIT ===
+    // === SUPPRESSION D'UN PRODUIT ===
     if (isset($_GET['supprimer'])) {
         $id = intval($_GET['supprimer']);
         $conn->query("DELETE FROM produits WHERE id=$id");
@@ -127,7 +119,7 @@
             <div class="bg-green-100 text-green-700 p-3 rounded mb-4"><?= $message ?></div>
         <?php endif; ?>
 
-        <!-- Formulaire d’ajout -->
+        <!-- Formulaire d'ajout -->
         <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow mb-6">
             <h2 class="text-lg font-semibold mb-3 text-blue-700">➕ Ajouter un produit</h2>
             <div class="grid md:grid-cols-2 gap-4">
@@ -147,7 +139,7 @@
                             class="border p-2 rounded flex-1 focus:ring-2 focus:ring-blue-500" required>
                     </div>
                     <div class="mt-1 text-sm text-gray-500">
-                        <span id="conversion-info">💡 Le prix sera automatiquement converti en Francs Congolais (FC)</span>
+                        <span id="conversion-info">💡 Le prix sera enregistré en Dollars (USD)</span>
                     </div>
                     <div id="conversion-display" class="mt-1 text-sm text-blue-600 hidden">
                         <span id="conversion-text"></span>
@@ -173,6 +165,7 @@
                         <th class="p-2 border">ID</th>
                         <th class="p-2 border">Nom</th>
                         <th class="p-2 border">Prix</th>
+                        <th class="p-2 border">Devise</th>
                         <th class="p-2 border">Qté</th>
                         <th class="p-2 border">Catégorie</th>
                         <th class="p-2 border">Image</th>
@@ -188,14 +181,34 @@
                             <td class="p-2 border"><?= htmlspecialchars($p['nom']) ?></td>
                             <td class="p-2 border">
                                 <div class="text-sm">
-                                    <div class="font-semibold text-green-600"><?= formaterPrix($p['prix']) ?> $</div>
-                                    <div class="text-gray-600"><?= formaterPrix(convertirUsdVersFc($p['prix'])) ?> FC</div>
+                                    <!-- Afficher le prix stocké -->
+                                    <div class="font-semibold text-green-600">
+                                        <?= formaterPrix($p['prix']) ?> 
+                                        <?= $p['devise'] === 'USD' ? '$' : 'FC' ?>
+                                    </div>
+                                    <!-- Afficher la conversion -->
+                                    <div class="text-gray-600">
+                                        <?php if ($p['devise'] === 'USD'): ?>
+                                            <?= formaterPrix(convertirUsdVersFc($p['prix'])) ?> FC
+                                        <?php else: ?>
+                                            <?= formaterPrix(convertirFcVersUsd($p['prix'])) ?> $
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
+                            </td>
+                            <td class="p-2 border text-center">
+                                <span class="px-2 py-1 rounded text-xs font-semibold <?= $p['devise'] === 'USD' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' ?>">
+                                    <?= $p['devise'] ?>
+                                </span>
                             </td>
                             <td class="p-2 border"><?= $p['quantite'] ?></td>
                             <td class="p-2 border"><?= htmlspecialchars($p['categorie']) ?></td>
                             <td class="p-2 border text-center">
-                                <img src="<?= $p['image'] ?>" alt="" class="w-12 h-12 object-cover mx-auto rounded">
+                                <?php if ($p['image']): ?>
+                                    <img src="<?= $p['image'] ?>" alt="" class="w-12 h-12 object-cover mx-auto rounded">
+                                <?php else: ?>
+                                    <span class="text-gray-400">Aucune</span>
+                                <?php endif; ?>
                             </td>
                             <td class="p-2 border"><?= $p['date_creation'] ?></td>
                             <td class="p-2 border"><?= $p['date_modification'] ?: '-' ?></td>
@@ -207,7 +220,6 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
-
                         </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -234,17 +246,26 @@
                             class="border p-2 rounded w-full md:col-span-2 focus:ring-2 focus:ring-yellow-400"><?= htmlspecialchars($prod['description']) ?></textarea>
                         <div class="md:col-span-2">
                             <div class="flex gap-2">
+                                <!-- Pré-sélectionner la devise stockée -->
                                 <select name="devise" id="devise-edit" class="border p-2 rounded focus:ring-2 focus:ring-yellow-400" onchange="updatePricePlaceholderEdit()">
-                                    <option value="USD">USD ($)</option>
-                                    <option value="FC">FC</option>
+                                    <option value="USD" <?= $prod['devise'] === 'USD' ? 'selected' : '' ?>>USD ($)</option>
+                                    <option value="FC" <?= $prod['devise'] === 'FC' ? 'selected' : '' ?>>FC</option>
                                 </select>
-                                <input type="number" min="1" step="0.01" name="prix" id="prix-edit" value="<?= $prod['prix'] ?>"
+                                <!-- Afficher le prix stocké -->
+                                <input type="number" min="1" step="0.01" name="prix" id="prix-edit" value="<?= floatval($prod['prix']) ?>"
                                     class="border p-2 rounded flex-1 focus:ring-2 focus:ring-yellow-400" required>
                             </div>
                             <div class="mt-1 text-sm text-gray-600">
-                                <span class="font-semibold text-green-600"><?= formaterPrix($prod['prix']) ?> $</span>
-                                <span class="mx-2">|</span>
-                                <span class="text-gray-600"><?= formaterPrix(convertirUsdVersFc($prod['prix'])) ?> FC</span>
+                                <!-- Afficher les conversions pour information -->
+                                <?php if ($prod['devise'] === 'USD'): ?>
+                                    <span class="font-semibold text-green-600">Stocké : <?= formaterPrix($prod['prix']) ?> $</span>
+                                    <span class="mx-2">|</span>
+                                    <span class="text-gray-600">Conversion : <?= formaterPrix(convertirUsdVersFc($prod['prix'])) ?> FC</span>
+                                <?php else: ?>
+                                    <span class="font-semibold text-green-600">Stocké : <?= formaterPrix($prod['prix']) ?> FC</span>
+                                    <span class="mx-2">|</span>
+                                    <span class="text-gray-600">Conversion : <?= formaterPrix(convertirFcVersUsd($prod['prix'])) ?> $</span>
+                                <?php endif; ?>
                             </div>
                             <div id="conversion-display-edit" class="mt-1 text-sm text-blue-600 hidden">
                                 <span id="conversion-text-edit"></span>
@@ -370,7 +391,7 @@
 
     <!-- Script pour la conversion de devises -->
     <script>
-        const TAUX_CHANGE = 2750; // 1 USD = 2,750 FC
+        const TAUX_CHANGE = 2500; // 1 USD = 2,500 FC
 
         function updatePricePlaceholder() {
             const devise = document.getElementById('devise').value;
@@ -380,11 +401,14 @@
             
             if (devise === 'USD') {
                 prixInput.placeholder = 'Prix en USD ($)';
-                conversionInfo.textContent = '💡 Le prix sera automatiquement converti en Francs Congolais (FC)';
+                conversionInfo.textContent = '💡 Le prix sera enregistré en Dollars (USD)';
             } else {
                 prixInput.placeholder = 'Prix en FC';
-                conversionInfo.textContent = '💡 Le prix sera automatiquement converti en Dollars (USD)';
+                conversionInfo.textContent = '💡 Le prix sera enregistré en Francs Congolais (FC)';
             }
+            
+            // Cacher l'affichage de conversion
+            conversionDisplay.classList.add('hidden');
             
             // Ajouter l'événement de conversion en temps réel
             prixInput.oninput = function() {
